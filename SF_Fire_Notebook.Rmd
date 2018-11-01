@@ -4,7 +4,7 @@ Author: "Benjamin Braun, benjaminpbraun@gmail.com"
 output: html_notebook
 ---
 
-The follow is my notebook for approaching this problem.  It is set up in a way that it can be easily shared. Under normal circumstances, I would make a client ready version that I would export as an HTML or PDF without code.  If time permits, I'll include that as well.
+The following is my notebook for approaching these problem.  It is set up in a way that it can be easily shared and produce reproducible results. Under normal circumstances, I would make a client ready version that I would export as an HTML or PDF without code.  If time permits, I'll include that as well.
 
 ## Questions/Tasks
 
@@ -17,9 +17,9 @@ Task 2) are there additional trends that would be helpful for the department to 
 
 ## Loading the data
 
-The first issue is getting the data into a manageable size for analysis.  The whole data set is far to large to handle on my lap top, so I'll work with the 2016 calls only.  This file is itself 315.3 MB which is far above the recommended size for github.  Let's take a random sample of rows from this file.  While this isn't ideal, it should give us some intuition regarding the questions that we can explore in an environment better suited for handling such a large data set.  
+The first issue is getting the data into a manageable size for analysis.  The whole data set is far too large to handle on my laptop, so I'll work with the 2016 calls only.  This file is itself 315.3 MB which is far above the recommended size for github and also too large for me to handle effectively on my laptop.  Therefore, I'm going to take a sample of rows from this file.  This will provide some intuition regarding the questions that we can then explore in an environment better suited for handling such a large data set.  Furthermore, conducting analysis on a sample before testing on the the larger body of data is a better way to ensure unbiased results and make sure we don't find patterns in the data that don't actually exist.
 
-With that in mind, I'm going to read in the first 10,00 rows of data and perform the preliminary analysis on this subset.  I'll also write this out as a CSV to post on github and use for the remainder of the analysis.
+With that in mind, I'm going to read in the first 10,000 rows of data and perform the preliminary analysis on this subset.  I'll also write this out as a CSV to post on github and use for the remainder of the analysis.
 
 ```{r random sample}
 
@@ -32,10 +32,14 @@ library(tidyverse)
 # 
 # write_csv(sample_data, "fire_subset.csv")
 
-sample_data <- read_csv("fire_subset.csv")
+sample_data <- read_csv("fire_subset.csv") # this writes the actual file
 
 
 ```
+
+Before moving on, I want to mention some issues inherent with taking the first 10,000 rows as my sample.  This will only reflect data from midnight on January 1st through 2 PM on January 12th.  I don't know if this is a particularly busy or slow time (I would think that new years there may be a particularly busy time; conversely there may be fewer fires in the winter).  Under normal circumstances, I would either select rows at random or better yet, work with the client to determine a time-frame that they feel is most appropriate.
+
+## Exploring, Cleaning, and Visualizing
 
 Let's explore the data.
 
@@ -46,6 +50,13 @@ glimpse(sample_data)
 ```
 
 For the first task, we're interested in turnout time (__the duration of time between when a unit is dispatched and when the unit is enroute__) at night.  So let's select the appropriate columns and then filter for night.  I'm going to assume that `Dispatch DtTm` is the time that the unit is dispatched and that `Response DtTm` is the time they are enroute (under normal circumstances I would confirm this with the client.)
+
+In the following code I will:
+
+* Select the appropriate variables
+* Filter out NA responses
+* Convert the date/time columns from character strings to date_time
+* Add a column indicating whether the call was durring night (10 AM to 6 PM) or not
 
 ```{r select and clean data}
 
