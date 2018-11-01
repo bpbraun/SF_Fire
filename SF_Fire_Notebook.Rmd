@@ -1,0 +1,36 @@
+---
+title: "SF Fire Analysis"
+Author: "Benjamin Braun, benjaminpbraun@gmail.com"
+output: html_notebook
+---
+
+The follow is my notebook for approaching this problem.  It is set up in a way that it can be easily shared. Under normal circumstances, I would make a client ready version that I would export as an HTML or PDF without code.  If time permits, I'll include that as well.
+
+## Questions/Tasks
+
+Task 1) There are perceived trends that tend to occur effecting turnout performance.  Your task is to explore the validity of each trend.  For each trend, present analysis in the form of visualization (chart, table, etc).
+
+    * Evening incidents have slower turnout times.  Note: Evening incidents are incidents that are created between the hours of 10:00 PM and 6:00 AM.
+    * Units with back to back responses have slower turnout times.  A back to back response is defined by a unit being dispatched within 10 minutes of becoming available.
+
+Task 2) are there additional trends that would be helpful for the department to know? You may use additional datasources if interest
+
+The first issue is getting the data into a manageable size for analysis.  The whole data set is far to large to handle on my lap top, so I'll work with the 2016 calls only.  This file is itself 315.3 MB which is far above the recommended size for github.  Let's take a random sample of rows from this file.  While this isn't ideal, it should give us some intuition regarding the questions that we can explore in an environment better suited for handling such a large data set.  
+
+With that in mind, I'm going to read in the first 15,000 rows of data and perform the preliminary analysis on this subset.  I'll also write this out as a CSV to post on github and use for the remainder of the analysis.
+
+```{r random sample}
+
+library(tidyverse)
+
+# This is the original code I used to read in a sample of the data set.  I'm keeping it here for reproducibility.
+# sample_data <- read_csv("Fire_Department_Calls_For_Service__2016_.csv", 
+#                         n_max = 15000)
+# 
+# write_csv(sample_data, "fire_subset.csv")
+
+sample_data <- read_csv("fire_subset.csv")
+
+
+```
+
