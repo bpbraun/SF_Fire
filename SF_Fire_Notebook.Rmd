@@ -15,17 +15,20 @@ Task 1) There are perceived trends that tend to occur effecting turnout performa
 
 Task 2) are there additional trends that would be helpful for the department to know? You may use additional datasources if interest
 
+## Loading the data
+
 The first issue is getting the data into a manageable size for analysis.  The whole data set is far to large to handle on my lap top, so I'll work with the 2016 calls only.  This file is itself 315.3 MB which is far above the recommended size for github.  Let's take a random sample of rows from this file.  While this isn't ideal, it should give us some intuition regarding the questions that we can explore in an environment better suited for handling such a large data set.  
 
-With that in mind, I'm going to read in the first 15,000 rows of data and perform the preliminary analysis on this subset.  I'll also write this out as a CSV to post on github and use for the remainder of the analysis.
+With that in mind, I'm going to read in the first 10,00 rows of data and perform the preliminary analysis on this subset.  I'll also write this out as a CSV to post on github and use for the remainder of the analysis.
 
 ```{r random sample}
 
 library(tidyverse)
 
 # This is the original code I used to read in a sample of the data set.  I'm keeping it here for reproducibility.
-# sample_data <- read_csv("Fire_Department_Calls_For_Service__2016_.csv", 
-#                         n_max = 15000)
+# 
+# sample_data <- read_csv("Fire_Department_Calls_For_Service__2016_.csv",
+#                         n_max = 10000)
 # 
 # write_csv(sample_data, "fire_subset.csv")
 
@@ -33,4 +36,32 @@ sample_data <- read_csv("fire_subset.csv")
 
 
 ```
+
+Let's explore the data.
+
+```{r data glimpse}
+
+glimpse(sample_data)
+
+```
+
+For the first task, we're interested in turnout time (__the duration of time between when a unit is dispatched and when the unit is enroute__) at night.  So let's select the appropriate columns and then filter for night.  I'm going to assume that `Dispatch DtTm` is the time that the unit is dispatched and that `Response DtTm` is the time they are enroute (under normal circumstances I would confirm this with the client.)
+
+```{r select and clean data}
+
+library(lubridate)
+
+data_night <- sample_data %>% 
+  select(RowID, `Call Number`, `Dispatch DtTm`, `Response DtTm`) %>%  # select colums
+  filter(!is.na(`Response DtTm`) == T) %>%  # filter out NA
+  mutate(`Dispatch DtTm` = mdy_hms(`Dispatch DtTm`),
+         `Response DtTm` = mdy_hms(`Response DtTm`)) %>% # change columns to mdy_hms format from character
+  mutate(difference = `Response DtTm` - `Dispatch DtTm`) # make a column with the difference
+
+# to do: make a variable for night nor day.  Then summarize and plot.
+
+data_night
+
+```
+
 
