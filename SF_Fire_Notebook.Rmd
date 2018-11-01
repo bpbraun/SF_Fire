@@ -67,12 +67,14 @@ data_night <- sample_data %>%
   filter(!is.na(`Response DtTm`) == T) %>%  # filter out NA
   mutate(`Dispatch DtTm` = mdy_hms(`Dispatch DtTm`),
          `Response DtTm` = mdy_hms(`Response DtTm`)) %>% # change columns to mdy_hms format from character
-  mutate(difference = `Response DtTm` - `Dispatch DtTm`) # make a column with the difference
-
-# to do: make a variable for night nor day.  Then summarize and plot.
-
+  mutate(difference = `Response DtTm` - `Dispatch DtTm`) %>% # make a column with the difference
+  mutate(just_time = format(mdy_hms(`Dispatch DtTm`), "%H:%M:%S")) %>% # make column with just the time
+  mutate(night_day = if_else(just_time >= hms("20:00:00") | just_time <= hms("06:00:00"),
+                     "night",
+                     "day"))
+                     
 data_night
 
 ```
 
-
+Now let's visualize the results.
