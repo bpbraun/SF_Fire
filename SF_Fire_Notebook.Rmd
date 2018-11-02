@@ -70,7 +70,7 @@ data_night <- sample_data %>%
   mutate(`Dispatch DtTm` = mdy_hms(`Dispatch DtTm`),
          `Response DtTm` = mdy_hms(`Response DtTm`)) %>% # change columns to mdy_hms format from character
   mutate(difference = `Response DtTm` - `Dispatch DtTm`) %>% # make a column with the difference
-  mutate(just_time = format(mdy_hms(`Dispatch DtTm`), "%H:%M:%S")) %>% # make column with just the time
+  mutate(just_time = hms(format(ymd_hms(`Dispatch DtTm`), "%H:%M:%S"))) %>% # make column with just the time
   mutate(night_day = if_else(just_time >= hms("20:00:00") | just_time <= hms("06:00:00"),
                      "night",
                      "day"))
@@ -79,11 +79,36 @@ data_night
 
 ```
 
+Before Visualizing, let's just see on average if night response time are greater.
+
+```{r night response times}
+
+data_night %>% 
+  group_by(night_day) %>% 
+  summarise(average = mean(difference), median = median(difference))
+
+```
+
+So on average night does have a higher response time (both mean and median), but let's see if that holds up when we analyze it visually.
+
 ### Visualize
 
 Now let's visualize the results.
 
-```{r visualize data}
+```{r visualize data, warning=FALSE, message=FALSE}
+
+ggplot(data_night, aes(x = as.numeric(just_time), 
+                       y = difference, 
+                       color = night_day)) +
+  geom_point() +
+  labs(y = "Response Time",
+       x = "Time of Day",
+       title = "Except for outliers, night response times do not  significantly differ from day response times") +
+  theme_minimal() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel
+        axis.text.x = element_blank())
 
 ```
 
