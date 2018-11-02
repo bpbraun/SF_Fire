@@ -101,29 +101,57 @@ ggplot(data_night, aes(x = as.numeric(just_time),
                        y = difference, 
                        color = night_day)) +
   geom_point() +
-  labs(y = "Response Time",
+  labs(y = "Response Time in Seconds",
        x = "Time of Day",
        title = "Except for outliers, night response times do not  significantly differ from day response times") +
   theme_minimal() +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
-        panel
+        panel.grid.minor.y = element_blank(),
         axis.text.x = element_blank())
 
 ```
 
 ### Interpret
 
+While the topline numbers for median and mean response times are, in fact, higher for night responses, visualizing the results show that they are actually pretty simmilar; only a few outliers are changing those numbers.
+
+In a full analysis, the next steps would be to perform some statistical testing to see if this difference is actually statistically significant.
+
 ## Back to Back Responses
+
+For the second task, we're interested in back to back response times (__back to back response is defined by a unit being dispatched within 10 minutes of becoming available__). So let's select the appropriate columns and then filter for night.  We'll again use `Dispatch DtTm` as the time that the unit is dispatched and `Response DtTm` as the time they are enroute (under normal circumstances I would confirm this with the client.)  We'll use `Available DtTm` for the time they became available.
+
+In the following code I will:
+
+* Select the appropriate variables
+* Filter out NA responses
+* Convert the date/time columns from character strings to date_time
+* Add a column indicating whether the call was within 10 minutes of becoming available.
 
 ### Exploring and Cleaning
 
-```{r select and clean data}
+```{r select and clean data 2}
 
+data_available <- sample_data %>% 
+  select(RowID, `Call Number`, `Dispatch DtTm`, `Response DtTm`, `Available DtTm`) %>%  # select colums
+  filter(!is.na(`Response DtTm`) == T) %>%  # filter out NA
+  mutate(`Dispatch DtTm` = mdy_hms(`Dispatch DtTm`),
+         `Response DtTm` = mdy_hms(`Response DtTm`),
+         `Available DtTm` = mdy_hms(`Available DtTm`)) %>% # change columns to mdy_hms format from character
+  mutate(difference = `Response DtTm` - `Dispatch DtTm`) %>% # make a column with the difference
+  mutate(diff_avail = `Available DtTm` - `Dispatch DtTm`) %>% 
+  mutate(just_time_difference = hms(format(ymd_hms(`Dispatch DtTm`), "%H:%M:%S")),
+         just_time_avail = hms(format(ymd_hms(`Dispatch DtTm`), "%H:%M:%S"))) %>% # make column with just the time
+  mutate(back_to_back = if_else(just_time_avail <= time_length()  | just_time <= hms("06:00:00"),
+                     "night",
+                     "day"))
+                     
+data_available
 ```
 ### Visualize
 
-```{r visualize data}
+```{r visualize data 2}
 
 ```
 
