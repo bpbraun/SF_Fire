@@ -71,7 +71,7 @@ data_night <- sample_data %>%
          `Response DtTm` = mdy_hms(`Response DtTm`)) %>% # change columns to mdy_hms format from character
   mutate(difference = `Response DtTm` - `Dispatch DtTm`) %>% # make a column with the difference
   mutate(just_time = hms(format(ymd_hms(`Dispatch DtTm`), "%H:%M:%S"))) %>% # make column with just the time
-  mutate(night_day = if_else(just_time >= hms("20:00:00") | just_time <= hms("06:00:00"),
+  mutate(night_day = if_else(just_time >= hms("20:00:00") | just_time <= hms("06:00:00"), # mark as day or night
                      "night",
                      "day"))
                      
@@ -79,7 +79,7 @@ data_night
 
 ```
 
-Before Visualizing, let's just see on average if night response time are greater.
+Before Visualizing, let's see on average if night response time are greater.
 
 ```{r night response times}
 
@@ -103,7 +103,7 @@ ggplot(data_night, aes(x = as.numeric(just_time),
   geom_point() +
   labs(y = "Response Time in Seconds",
        x = "Time of Day",
-       title = "Except for outliers, night response times do not  significantly differ from day response times") +
+       title = "Except for outliers, night response times do not significantly differ from day response times") +
   theme_minimal() +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
@@ -135,30 +135,89 @@ In the following code I will:
 
 data_available <- sample_data %>% 
   select(RowID, `Call Number`, `Dispatch DtTm`, `Response DtTm`, `Available DtTm`) %>%  # select colums
-  filter(!is.na(`Response DtTm`) == T) %>%  # filter out NA
+  filter(!is.na(`Response DtTm`) == T,
+         !is.na(`Available DtTm`) == T) %>%  # filter out NA
   mutate(`Dispatch DtTm` = mdy_hms(`Dispatch DtTm`),
          `Response DtTm` = mdy_hms(`Response DtTm`),
          `Available DtTm` = mdy_hms(`Available DtTm`)) %>% # change columns to mdy_hms format from character
   mutate(difference = `Response DtTm` - `Dispatch DtTm`) %>% # make a column with the difference
   mutate(diff_avail = `Available DtTm` - `Dispatch DtTm`) %>% 
-  mutate(just_time_difference = hms(format(ymd_hms(`Dispatch DtTm`), "%H:%M:%S")),
-         just_time_avail = hms(format(ymd_hms(`Dispatch DtTm`), "%H:%M:%S"))) %>% # make column with just the time
-  mutate(back_to_back = if_else(just_time_avail <= time_length()  | just_time <= hms("06:00:00"),
-                     "night",
-                     "day"))
+  mutate(back_to_back = if_else(diff_avail <= time_length(600),
+                     "Yes",
+                     "No"))
                      
 data_available
 ```
-### Visualize
 
-```{r visualize data 2}
+Before Visualizing, let's see on average if night response time are greater.
+
+```{r back to back response times}
+
+data_available %>% 
+  group_by(back_to_back) %>% 
+  summarise(average = mean(difference), median = median(difference))
+
+```
+
+As with the night response time, back to back response times also appear to have higher mean and median responses.  Let's see if visualizing the results give us additional insight.
+
+Visualize
+
+```{r visualize data 2, warning=FALSE, message=FALSE}
+
+ggplot(data_available, aes(x = as.numeric(diff_avail), 
+                       y = difference, 
+                       color = back_to_back)) +
+  geom_point() + 
+  labs(y = "Response Time in Seconds",
+       x = "Difference Between Availability and Dispatch",
+       title = "Availability appears to affect responsen time beyond 10 minutes") +
+  theme_minimal() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank())
 
 ```
 
 ### Intepret
 
+Similar to the night topline numbers for median and mean response times, visualizing the results for back to back respoinses  show that they are actually pretty simmilar to non back to back respones.  It seems that response time is affected by rest for far longoer than 10 minutes; moreover, variation seems extremely wide when there is more rest.
+
+In a full analysis, the next steps would be to perform some statistical testing to see if this difference is actually statistically significant.
+
 ## Additional Analysis
 
-By neighborhood
+One additional analysis would be to analyze the results by neighborhood. This could be useful to see if certain areas are being served better than others.
 
-By geolocation
+```{r responses by neighborhood}
+
+data_neighborhood <- sample_data %>% 
+  select(RowID, `Dispatch DtTm`, `Response DtTm`, `Neighborhooods - Analysis Boundaries`) %>%  # select colums
+  filter(!is.na(`Response DtTm`) == T,
+         !is.na(`Neighborhooods - Analysis Boundaries`)) %>%  # filter out NA
+  mutate(`Dispatch DtTm` = mdy_hms(`Dispatch DtTm`),
+         `Response DtTm` = mdy_hms(`Response DtTm`)) %>% # change columns to mdy_hms format from character
+  mutate(difference = `Response DtTm` - `Dispatch DtTm`) %>% # make a column with the difference
+  mutate(just_time = hms(format(ymd_hms(`Dispatch DtTm`), "%H:%M:%S"))) %>% # make column with just the time
+  group_by(`Neighborhooods - Analysis Boundaries`) %>%
+  summarise(average = mean(difference)) %>% 
+  ungroup() %>% 
+  arrange(desc(average)) %>% 
+  rename(Neighborhood = `Neighborhooods - Analysis Boundaries`)
+                     
+data_neighborhood
+
+ggplot(data_neighborhood, aes(x = reorder(Neighborhood, average), y = average)) +
+  geom_col()+
+  coord_flip() + 
+  labs(x = "Neighborhood",
+       y = "Average Response Time",
+       title = "Response times vary greatly by neighborhood") +
+  theme_minimal() +
+  theme(panel.grid.minor.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank())
+
+```
+
+A subsequent phase of analysis would be to averlay this information on a map with other geospatial data like the location of fire stations and deomgraphic data (socio-economic, ethnic, etc.).
