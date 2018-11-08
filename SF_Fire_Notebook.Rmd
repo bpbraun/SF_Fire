@@ -135,15 +135,15 @@ In the following code I will:
 
 ```{r select and clean data 2}
 
+
 data_available <- sample_data %>% 
   select(RowID, `Call Number`, `Dispatch DtTm`, `Response DtTm`, `Available DtTm`) %>%  # select colums
   filter(!is.na(`Response DtTm`) == T,
          !is.na(`Available DtTm`) == T) %>%  # filter out NA
   mutate(`Dispatch DtTm` = mdy_hms(`Dispatch DtTm`),
-         `Response DtTm` = mdy_hms(`Response DtTm`),
          `Available DtTm` = mdy_hms(`Available DtTm`)) %>% # change columns to mdy_hms format from character
-  mutate(difference = `Response DtTm` - `Dispatch DtTm`) %>% # make a column with the difference
-  mutate(diff_avail = `Available DtTm` - `Dispatch DtTm`) %>% 
+ # mutate(diff_avail = `Available DtTm` - `Dispatch DtTm`) %>%  This is wrong--this calculates the short calls, not the back to back
+# What needs to happen at this point is 
   mutate(back_to_back = if_else(diff_avail <= time_length(600),
                      "Yes",
                      "No"))
